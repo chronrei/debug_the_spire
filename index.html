@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug the Spire</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="lobby-screen">
+        <div class="lobby-content">
+            <h1 class="lobby-title">> DEBUG_THE_SPIRE_</h1>
+            <p class="lobby-subtitle">SYSTEM STATUS: WAITING FOR USER INPUT...</p>
+            <button id="start-game-btn" onclick="startGameFlow()">[ START ]</button>
+            <button id="record-btn" onclick="openRecordModal()">[ RECORDS ]</button>
+            <div class="version-info">v1.0.0 Alpha Build</div>
+        </div>
+    </div>
+    <div id="record-modal" class="modal hidden">
+        <div class="modal-content record-content">
+            <h2>📊 SYSTEM_RECORDS (TOP 10)</h2>
+            <button class="close-btn" onclick="closeRecordModal()">X</button>
+            
+            <div class="record-list-wrapper">
+                <table id="record-table">
+                    <thead>
+                        <tr>
+                            <th>RANK</th>
+                            <th>SCORE</th>
+                            <th>STAGE</th>
+                            <th>DATE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="record-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="game-container">
+        <header>
+            <h1>> DEBUG_THE_SPIRE_</h1>
+            <div class="game-info" style="display: flex; gap: 20px; font-size: 1.2em; margin-top: 10px;">
+                <div id="stage-info">STAGE: 1-1</div>
+                <div id="score-info">SCORE: 0</div>
+                <div id="coin-info" style="color: #ffd700; text-shadow: 0 0 5px #ffd700;">
+                    COIN: 0
+                </div>
+            </div>
+        </header>
+        <div id="artifact-bar" style="
+        display: flex; 
+        gap: 10px; 
+        padding: 10px 20px; 
+        background: rgba(0,0,0,0.5); 
+        border-bottom: 1px solid #333; 
+        overflow-x: auto; 
+        min-height: 70px;
+        align-items: center;">
+        </div>
+        <div id="reward-modal" class="modal hidden">
+            <div class="modal-content reward-content">
+                <h2 id="reward-title">VICTORY!</h2>
+                <div id="reward-details">
+                    <p>전투에서 승리했습니다!</p>
+                    <p id="reward-coin-text" class="highlight-text">획득 코인: 0 G</p>
+                    <p style="font-size: 0.8em; color: #888;">(남은 체력에 비례하여 보너스 획득)</p>
+                </div>
+                <button id="next-stage-btn" onclick="openCardReward()">보상 카드 확인 >></button>
+            </div>
+        </div>
+        <div id="card-reward-modal" class="modal hidden">
+            <div class="modal-content card-reward-content">
+                <h2>CARD REWARD</h2>
+                <p>덱에 추가할 카드를 선택하세요.</p>
+                
+                <div id="reward-card-list" class="reward-card-container"></div>
+                
+                <button class="skip-btn" onclick="skipCardReward()">[ SKIP (선택 안 함) ]</button>
+            </div>
+        </div>
+
+        <div class="battle-area">
+            <div id="guide-btn" onclick="toggleGameGuide()">?</div>
+            <div id="guide-location-hint" class="hidden">
+                <div class="hint-arrow">▲</div>
+                <div class="hint-body">
+                    <p><strong>가이드는 여기에 있습니다!</strong></p>
+                    <p>게임 중 언제든 다시 열어볼 수 있습니다.</p>
+                    <button onclick="confirmGuideHint()">알겠습니다</button>
+                </div>
+            </div>
+            <div class="unit-container player">
+                <div class="sprite-char">Debi</div>
+                <img src="img/char_image2.png" class="player-sprite" alt="Debi">
+                <div id="player-status-box" style="height: 25px; margin-bottom: 5px; color: yellow;"></div>
+                <div class="stats">
+                    <p>🛡️ 방어도: <span id="player-block">0</span></p>
+                    <div class="hp-bar player-hp"><div id="player-hp-fill" style="width: 100%;"></div></div>
+                    <p>HP: <span id="player-hp">80</span> / <span id="player-max-hp">80</span></p>
+                </div>
+            </div>
+
+            <div class="unit-container enemy">
+                <div class="intent-bubble" id="enemy-intent">⚠️ 행동 예정</div>
+                <div class="sprite" id="enemy-name">Loading...</div> 
+                <div id="enemy-status-box" style="height: 25px; margin-bottom: 5px; color: yellow;"></div>
+                <div class="stats">
+                    <p>🛡️ 방어도: <span id="enemy-block">0</span></p>
+                    <div class="hp-bar"><div id="enemy-hp-fill" style="width: 100%;"></div></div>
+                    <p>HP: <span id="enemy-hp">50</span> / <span id="enemy-max-hp">50</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="play-area">
+            <div class="pile-group">
+                <div class="mana-container">
+                    <div class="mana-title">RAM (MANA)</div>
+                    <div class="mana-box">
+                        <span id="player-mana">3</span> / 3
+                    </div>
+                </div>
+                <div class="pile" id="deck-pile" onclick="openModal('deck')">
+                    <div class="pile-name">DECK</div>
+                    <div class="pile-count" id="deck-count">0</div>
+                </div>
+            </div>
+
+            <div class="hand-area" id="hand-container">
+                </div>
+
+            <div class="right-group">
+                <div id="battle-log-container">
+                    <div class="log-entry">> System initialized...</div>
+                </div>
+                <button id="end-turn-btn" onclick="endTurn()">TURN END ↵</button>
+                
+                <div class="pile" id="discard-pile" onclick="openModal('discard')">
+                    <div class="pile-name">TRASH</div>
+                    <div class="pile-count" id="discard-count">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="card-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">CARD LIST</h2>
+            <button class="close-btn" onclick="closeModal()">X</button>
+            <div id="modal-card-list" class="modal-card-container"></div>
+        </div>
+    </div>
+    <div id="game-tooltip" class="hidden">
+        <h3 id="tooltip-title">제목</h3>
+        <p id="tooltip-desc">설명</p>
+    </div>
+
+    <div id="game-guide-modal" class="modal hidden" onclick="toggleGameGuide()">
+        <div class="modal-content guide-content" onclick="event.stopPropagation()">
+            <h2>📚 SYSTEM_MANUAL (게임 가이드)</h2>
+            <button class="close-btn" onclick="toggleGameGuide()">X</button>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button onclick="openTutorial()" style="
+                    background: #00ff41; 
+                    color: #000; 
+                    border: none; 
+                    padding: 10px 20px; 
+                    font-weight: bold; 
+                    cursor: pointer; 
+                    border-radius: 5px;
+                    box-shadow: 0 0 10px #00ff41;">
+                    🔍 화면 UI 설명 보기 (초보자 가이드)
+                </button>
+            </div>
+            <div class="guide-body">
+                <section>
+                    <h3>1. 게임 목표 & 전투 방법</h3>
+                    <p>당신은 시스템을 위협하는 버그(적)를 제거해야 합니다.</p>
+                    <ol style="padding-left: 20px; margin-bottom: 15px;">
+                        <li><strong>적의 의도 확인:</strong> 적 머리 위의 아이콘(⚔️공격, 🛡️방어 등)을 보고 행동을 예측하세요.</li>
+                        <li><strong>카드 사용:</strong> 내 턴에 <strong>RAM(마나)</strong>을 소모하여 공격하거나 방어하세요.</li>
+                        <li><strong>턴 종료:</strong> 행동을 마치면 [TURN END] 버튼을 눌러 적에게 턴을 넘기세요.</li>
+                        <li><strong>스테이지:</strong> 스테이지는 3번의 일반 전투와 1번의 보스 전투로 이루어져요.</li>
+                        <li><strong>승리 조건:</strong> 3개의 스테이지를 통과하고 보스를 처치하세요!</li>
+                    </ol>
+                </section>
+
+                <section>
+                    <h3>2. 생존을 위한 핵심 규칙</h3>
+                    <ul>
+                        <li>❤️ <strong>HP (체력):</strong> 0이 되면 시스템이 다운되어 패배합니다.</li>
+                        <li>⚡ <strong>RAM (마나):</strong> 카드를 쓸 때 필요한 에너지입니다. 매 턴 <strong>3</strong>으로 다시 채워집니다.</li>
+                        <li>🛡️ <strong>방어도 (중요!):</strong> 적의 공격을 체력 대신 막아줍니다.<br>
+                            <span style="color: #ff4444; font-size: 0.9em;">※ 주의: 남은 방어도는 턴이 끝나면 사라집니다! 매 턴 새로 쌓아야 합니다.</span>
+                        </li>
+                        <li style="margin-top: 5px;">✨ <strong>보스 처치 보너스:</strong> 스테이지 보스를 잡으면 체력이 <strong>100%</strong> 회복됩니다.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>3. 시스템 복구 콘솔 (쉼터)</h3>
+                    <p>보스 스테이지 진입 전(3번째 적 처치 후), 정비를 위한 쉼터가 등장합니다.</p>
+                    <ul>
+                        <li>💤 <strong>시스템 복원 (회복):</strong> 손실된 체력의 <strong>30%</strong>를 회복합니다.</li>
+                        <li>🗑️ <strong>디스크 정리 (카드 삭제):</strong> <strong>골드</strong>를 소모하여 덱에서 카드를 <strong>영구 제거</strong>합니다.<br>
+                            <span style="font-size:0.9em; color:#aaa;">(비용: 75G부터 시작, 제거할 때마다 +25G 증가)</span>
+                        </li>
+                        <li><span style="color:#ff5555">주의: 회복과 카드 삭제 중 하나만 선택할 수 있으며 카드 삭제는 여러번 시도할 수 있습니다.</span></li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>4. 속성 상성 (Elemental Logic)</h3>
+                    <p>적의 속성(이름 옆 아이콘)에 맞춰 상태이상을 걸면 특수 효과가 발생합니다.</p>
+                    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px;">
+                        <p style="margin:5px 0;">🔥 <strong>불 속성 적에게...</strong></p>
+                        <ul style="margin-top:0; margin-bottom: 15px;">
+                            <li>🔥화상을 걸면? → <span style="color:#888">무효 (이미 불타고 있음)</span></li>
+                            <li>🌿속박을 걸면? → <span style="color:#888">무효 (덩굴이 타버림)</span></li>
+                            <li>💧젖음을 걸면? → <span style="color:#4488ff">적 약화 (불이 식어 공격력 감소)</span></li>
+                        </ul>
+                        
+                        <p style="margin:5px 0;">💧 <strong>물 속성 적에게...</strong></p>
+                        <ul style="margin-top:0; margin-bottom: 15px;">
+                            <li>💧젖음을 걸면? → <span style="color:#888">무효 (이미 젖어있음)</span></li>
+                            <li>🔥화상을 걸면? → <span style="color:#888">무효 (불이 꺼짐)</span></li>
+                            <li>🌿속박을 걸면? → <span style="color:#55ff55">효과 강화 (속박 수치 +1)</span></li>
+                        </ul>
+
+                        <p style="margin:5px 0;">🌿 <strong>풀 속성 적에게...</strong></p>
+                        <ul style="margin-top:0;">
+                            <li>🌿속박을 걸면? → <span style="color:#888">무효 (덩굴에 엉키지 않음)</span></li>
+                            <li>🔥화상을 걸면? → <span style="color:#ff4444">치명타 (화상 데미지 2배!)</span></li>
+                            <li>💧젖음을 걸면? → <span style="color:#ff0055">주의! 적이 성장하여 힘이 세집니다.</span></li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section>
+                    <h3>5. 아이콘 설명 (상태이상)</h3>
+                    <ul>
+                        <li>💪 <strong>힘:</strong> 공격 카드의 피해량이 수치만큼 증가합니다.</li>
+                        <li>🕯️ <strong>의식:</strong> 턴 시작 시, 수치만큼 '힘'을 얻습니다.</li>
+                        <li>🔌 <strong>과부하:</strong> 턴 종료 시, 수치만큼 '힘'이 감소합니다.</li>
+                        <li>🚧 <strong>격노:</strong> 공격 카드를 쓸 때마다 수치만큼 방어도가 증가합니다.</li>
+                        <li>⚠️ <strong>예외 처리:</strong> 카드의 효과로 체력을 잃을 때마다 수치만큼 '힘'이 오릅니다.</li>
+                        <li>🔥 <strong>화상:</strong> 턴 종료 시 수치만큼 피해를 입고 사라집니다.</li>
+                        <li>💧 <strong>젖음:</strong> 공격 피해를 받을 때 수치만큼 <strong>고정 피해</strong>가 추가로 들어갑니다. (연타에 유리)</li>
+                        <li>🌿 <strong>속박:</strong> 방어도를 얻을 때 수치만큼 적게 얻습니다.</li>
+                        <li>💔 <strong>취약:</strong> 공격 피해를 입을 때 <strong>50%</strong>의 추가 피해를 입습니다.</li>
+                        <li>📉 <strong>약화:</strong> 공격으로 주는 피해량이 <strong>25%</strong> 감소합니다.</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div id="rest-site-modal" class="modal hidden">
+        <div class="modal-content rest-content">
+            <div class="rest-help-btn" onclick="toggleGameGuide()">?</div>
+            <h2>🏕️ SYSTEM_RECOVERY_CONSOLE</h2>
+            <p class="rest-desc">보스 전투(BOSS_STAGE) 진입 전, 정비가 필요합니다.</p>
+            
+            <div class="rest-status-bar">
+                <span>❤️ HP: <span id="rest-hp-val">0</span> / <span id="rest-max-hp-val">0</span></span>
+                <span style="color:#ffd700">💰 COIN: <span id="rest-coin-val">0</span> G</span>
+            </div>
+
+            <div class="rest-options">
+                <div id="btn-rest-heal" class="rest-option-card" onclick="chooseRestHeal()">
+                    <div class="option-icon">💤</div>
+                    <h3>시스템 복원</h3>
+                    <p>손실된 체력의 <strong>30%</strong>를 복구합니다.</p>
+                    <p class="option-value" id="heal-amount-text">회복량: +0</p>
+                </div>
+
+                <div id="btn-rest-remove" class="rest-option-card" onclick="chooseRestRemove()">
+                    <div class="option-icon">🗑️</div>
+                    <h3>디스크 정리</h3>
+                    <p>덱에서 카드를 영구적으로 제거합니다.</p>
+                    <p class="option-cost" id="remove-cost-text">비용: 75 G</p>
+                </div>
+            </div>
+
+            <div id="rest-deck-view" class="hidden">
+                <h3>[ 제거할 카드를 선택하세요 ]</h3>
+                <div id="rest-card-list" class="card-list-grid"></div>
+            </div>
+
+            <button id="leave-rest-btn" class="action-btn" onclick="leaveRestSite()">>> BOSS BATTLE START >></button>
+        </div>
+    </div>
+
+    <div id="ui-tutorial-overlay" class="hidden" onclick="closeTutorial()">
+        <div class="tutorial-dimmer">
+            <div class="tut-bubble top-left">
+                <h3>🏺 유물</h3>
+                <p>보유 중인 유물입니다.<br>전투에 도움이 되는 패시브 효과를 줍니다.<br>마우스를 올리면 설명을 볼 수 있습니다.</p>
+            </div>
+
+            <div class="tut-bubble top-center">
+                <h3>👾 적의 의도</h3>
+                <p>적이 다음에 무엇을 할지 보여줍니다.<br>공격 예정이라면 방어 카드를, 버프 예정이라면 공격을 준비하세요!</p>
+            </div>
+
+            <div class="tut-bubble center">
+                <h3>❤️ 체력 & 🛡️ 방어도</h3>
+                <p><strong>체력:</strong> 체력이 전부 소진되면 패배합니다.<br><strong>방어도:</strong> 적의 공격을 막아줍니다.</p>
+            </div>
+
+            <div class="tut-bubble bottom-left">
+                <h3>📚 카드 덱 & ⚡ 마나</h3>
+                <p><strong>마나(RAM):</strong> 카드를 쓸 때 소모됩니다. 매 턴 3으로 다시 찹니다.<br><strong>덱:</strong> 아직 손에 들어오지 않은 카드들입니다. 클릭하면 남은 카드를 볼 수 있습니다.</p>
+            </div>
+
+            <div class="tut-bubble bottom-center">
+                <h3>🃏 손패</h3>
+                <p>현재 사용할 수 있는 카드입니다.<br>클릭하여 사용할 수 있고 턴이 끝나면 모두 버려집니다.</p>
+            </div>
+
+            <div class="tut-bubble bottom-right">
+                <h3>🗑️ 버린 카드 더미</h3>
+                <p>사용했거나 버려진 카드들입니다.<br>덱이 비면 이 카드들을 섞어서 다시 덱으로 만듭니다.</p>
+            </div>
+
+            <div class="tut-bubble turn-end">
+                <h3>⏳ 턴 종료</h3>
+                <p>모든 행동을 마쳤다면 클릭하세요.<br><strong>주의:</strong> 남은 마나와 방어도는<br>다음 턴으로 넘어가지 않습니다!</p>
+                <div class="arrow-down-right"></div>
+            </div>
+
+            <div class="tut-close-msg">
+                [ 화면을 클릭하면 닫힙니다 ]
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/game.js"></script>
+</body>
+</html>
